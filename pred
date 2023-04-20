@@ -1,0 +1,368 @@
+#dataset: https://www.kaggle.com/datasets/nehalbirla/vehicle-dataset-from-cardekho
+
+import pandas as pd
+import numpy as np
+import random
+from sklearn.metrics import *
+from sklearn.model_selection import *
+from sklearn.linear_model import LinearRegression
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.preprocessing import LabelEncoder
+
+import seaborn as sns
+from matplotlib import pyplot as plt
+
+# loading the dataset
+file = "car_details_v4.csv"
+car_data = pd.read_csv(file)
+car_data.head()
+
+# checking for all the null values
+car_data.isnull().sum()
+
+# dropping all the null values
+car_data = car_data.dropna()
+
+
+# 955 unique car models in total
+print(len(car_data["Model"].unique()))
+
+# 104 unique car engines in total
+print(len(car_data["Engine"].unique()))
+
+# # 55 unique Fuel Tank Capacities in total
+print(len(car_data["Fuel Tank Capacity"].unique()))
+
+
+import plotly.express as px
+## Make Frequency
+fig = px.bar(car_data['Make'].value_counts(), x='Make')
+fig.update_layout(
+    title="Make Count",
+    xaxis_title="Count",
+    yaxis_title="Make"
+)
+fig.show()
+
+## Make vs. Price
+# # bar chart
+# fig = px.bar(car_data, x='Make', y='Price', title="Selling price of each make")
+# fig.show()
+# # boxplot
+fig = px.box(car_data, x="Make", y="Price")
+fig.show()
+
+
+# Most of the cars were made by Maruti Suzuki and Mercedes-Benz
+
+
+
+# Price distribution
+# # bar chart
+fig = px.histogram(car_data, x="Price")
+fig.show()
+
+# boxplot
+fig = px.box(car_data, x="Price")
+fig.show()
+
+# Extremely right-skewed, many outliers
+
+
+# # Year vs. Price
+# bar chart
+sns.barplot(x = car_data["Year"],y = car_data["Price"],data=car_data)
+plt.xticks(rotation=90)
+plt.show()
+
+# 2022 has the highest selling price
+# 2006 has the lowest selling price
+
+
+# Kilommeter distribution
+fig = px.histogram(car_data, x="Kilometer")
+fig.show()
+
+# boxplot
+fig = px.box(car_data, x="Kilometer")
+fig.show()
+
+# A few outliers
+
+## Price vs. Kilometer
+fig = px.scatter(car_data, x="Kilometer", y="Price")
+fig.show()
+# Cars that have been driven for less than 80k usually can be sold in higher prices
+
+
+## Fuel type Count
+fig = px.bar(car_data['Fuel Type'].value_counts(), x='Fuel Type', title="Fuel Type Count")
+fig.update_layout(
+    title="Fuel Type Count",
+    xaxis_title="Count",
+    yaxis_title="Fuel Type"
+)
+fig.show()
+
+# Majority of cars are using Diesel and Petrol
+
+
+# Fuel Type vs. Price
+sns.barplot(x = car_data["Fuel Type"],y = car_data["Price"],data=car_data)
+plt.xticks(rotation=90)
+plt.show()
+
+# There are only 3 hybrid cars, but they are sold in the highest prices
+
+print(car_data['Transmission'].value_counts())
+# sns.countplot(x='Transmission',data=car_data)
+# The difference is not very large
+
+# Transmission vs. Price
+sns.barplot(x = car_data["Transmission"],y = car_data["Price"],data=car_data)
+plt.xticks(rotation=90)
+plt.show()
+
+# Automatic cars are more expansive than manuel cars in general
+
+
+## Color Count
+fig = px.bar(car_data['Color'].value_counts(), x='Color', title="Color Count")
+fig.update_layout(
+    title="Color Count",
+    xaxis_title="Count",
+    yaxis_title="Color"
+)
+fig.show()
+
+# Most of cars are white
+
+
+print(car_data['Owner'].value_counts())
+# sns.countplot(x='Owner',data=car_data)
+
+# Owner vs. Price
+sns.barplot(x = car_data["Owner"],y = car_data["Price"],data=car_data)
+plt.xticks(rotation=90)
+plt.show()
+
+# For some reason 3rd-hand cars are sold in higher prices than 1st and 2nd-hand cars
+
+print(car_data["Seller Type"].value_counts())
+sns.countplot(x='Seller Type',data=car_data)
+
+print(car_data["Drivetrain"].value_counts())
+# sns.countplot(x='Drivetrain',data=car_data)
+
+# Drivetrain vs. Price
+sns.barplot(x = car_data["Drivetrain"],y = car_data["Price"],data=car_data)
+plt.xticks(rotation=90)
+plt.show()
+
+# FWD cars have relatively low values
+
+print(car_data['Seating Capacity'].value_counts())
+# sns.countplot(x='Owner',data=car_data)
+
+# Seating Capacity vs. Price
+sns.barplot(x = car_data["Seating Capacity"],y = car_data["Price"],data=car_data)
+plt.xticks(rotation=90)
+plt.show()
+
+# 2-seat cars have the highest value (Roadsters?), 5-seat cars have relatively low values compared with 6/7 seats cars for some reason
+
+# Fuel Tank Capacity distribution
+fig = px.histogram(car_data, x="Fuel Tank Capacity")
+fig.show()
+
+# boxplot
+fig = px.box(car_data, x="Fuel Tank Capacity")
+fig.show()
+
+# A few outliers, most of cars have a fuel tank capacity within the range [42, 60]
+
+## Price vs. Fuel Tank Capacity
+fig = px.scatter(car_data, x="Fuel Tank Capacity", y="Price")
+fig.show()
+
+# The fuel tank capacity itsefl cannot determine the car selling price
+
+car_data["Engine"].unique()
+
+# encoding categorical variables
+label_encoder = LabelEncoder()
+car_data["make_enc"] = label_encoder.fit_transform(car_data["Make"])
+car_data["fuel_enc"] = label_encoder.fit_transform(car_data["Fuel Type"])
+car_data["price_enc"] = round(car_data['Price']/60, 4)
+car_data["transmission_enc"] = label_encoder.fit_transform(car_data["Transmission"])
+car_data["color_enc"] = label_encoder.fit_transform(car_data["Color"])
+car_data["owner_enc"] = label_encoder.fit_transform(car_data["Owner"])
+car_data["engine_enc"] = label_encoder.fit_transform(car_data["Engine"])
+car_data["drive_enc"] = label_encoder.fit_transform(car_data["Drivetrain"])
+
+car_data = car_data.drop('Make', axis=1)
+car_data = car_data.drop('Model', axis=1)
+car_data = car_data.drop('Location', axis=1)
+car_data = car_data.drop('Max Power', axis=1)
+car_data = car_data.drop('Max Torque', axis=1)
+car_data = car_data.drop('Fuel Type', axis=1)
+car_data = car_data.drop('Transmission', axis=1)
+car_data = car_data.drop('Color', axis=1)
+car_data = car_data.drop('Owner', axis=1)
+car_data = car_data.drop('Engine', axis=1)
+car_data = car_data.drop('Drivetrain', axis=1)
+car_data = car_data.drop('Price', axis=1)
+car_data = car_data.drop('Seller Type', axis=1)
+
+
+corr = car_data.corr()
+corr.style.background_gradient(cmap='Blues')
+plt.savefig('result.png', bbox_inches='tight', pad_inches=0.0)
+
+car_data_model = car_data.copy()
+car_data_model = car_data_model.drop('Kilometer', axis=1)
+car_data_model = car_data_model.drop('Seating Capacity', axis=1)
+car_data_model = car_data_model.drop('make_enc', axis=1)
+car_data_model = car_data_model.drop('fuel_enc', axis=1)
+car_data_model = car_data_model.drop('transmission_enc', axis=1)
+car_data_model = car_data_model.drop('color_enc', axis=1)
+car_data_model = car_data_model.drop('drive_enc', axis=1)
+car_data_model.head()
+
+corr = car_data_model.corr()
+corr.style.background_gradient(cmap='coolwarm')
+
+# setting random seed
+random.seed(100)
+seed = 100
+
+# splitting data into X and y
+X = car_data_model.drop('price_enc', axis=1)
+y = car_data_model['price_enc']
+
+# splitting the data
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=100, test_size=0.2)
+
+# running multiple regression algorithms to select the best one 
+models = []
+models.append(('Linear Regression', LinearRegression()))
+models.append(('Decision Tree', DecisionTreeRegressor()))
+models.append(('Random Forest', RandomForestRegressor()))
+models.append(('KNN', KNeighborsRegressor()))
+
+
+# creating function to compare metrics
+for name, model in models:
+  model.fit(X_train, y_train)
+  y_pred = model.predict(X_test)
+  mse = mean_squared_error(y_test, y_pred)
+  rmse = mean_squared_error(y_test, y_pred, squared=False)
+  mae = mean_absolute_error(y_test, y_pred)
+  print("model: ", name)
+  print("mse: ", mse)
+  print("rmse: ", rmse)
+  print("mae: ", mae)
+  print("\n")
+  
+  
+# using gridsearchcv to get the best parameters
+from sklearn.model_selection import GridSearchCV
+
+param_grid = {
+    'bootstrap': [True],
+    'max_depth': [80, 90, 100, 110],
+    'max_features': [2, 3],
+    'min_samples_leaf': [3, 4, 5],
+    'min_samples_split': [8, 10, 12],
+    'n_estimators': [100, 200, 300, 1000]
+}
+
+rf = RandomForestRegressor(random_state=seed)
+grid_search = GridSearchCV(estimator = rf, param_grid = param_grid, cv = 3, n_jobs = -1, verbose = 2)
+
+# final model with best estimators
+final_model = RandomForestRegressor(n_estimators=300, min_samples_split=8, min_samples_leaf=3, max_features=3, max_depth=80, random_state=seed)
+final_model.fit(X_train, y_train)
+y_pred_final = final_model.predict(X_test)
+x_pred_final = final_model.predict(X_train)
+
+print('Accuracy for Train set')
+errors_train = abs(x_pred_final - y_train)
+print('Mean Absolute Error:', round(np.mean(errors_train), 2))
+mape_train = 100 * (errors_train / y_train)
+accuracy_train = 100 - np.mean(mape_train)
+print('Accuracy:', round(accuracy_train, 4), '%.')
+
+
+print('\nAccuracy for Test set')
+errors = abs(y_pred_final - y_test)
+print('Mean Absolute Error:', round(np.mean(errors), 2))
+mape = 100 * (errors / y_test)
+accuracy = 100 - np.mean(mape)
+print('Accuracy:', round(accuracy, 4), '%.')
+
+
+actual_values = y_test
+predicted_values = y_pred_final
+
+plt.figure(figsize=(5, 5))
+ax1 = sns.distplot(y_test, hist=False, color="r", label="Actual Value")
+sns.distplot(y_pred_final, hist=False, color="b", label="Fitted Values" , ax=ax1)
+plt.title('Actual vs Fitted Values for Price')
+plt.xlabel('Price (in dollars)')
+
+plt.show()
+plt.close()
+
+
+# feature importance plot
+feature_scores = pd.Series(final_model.feature_importances_, index=X_train.columns).sort_values(ascending=False)
+std = np.std([tree.feature_importances_ for tree in final_model.estimators_], axis=0)
+
+fig, ax = plt.subplots()
+feature_scores.plot.bar(yerr=std, ax=ax)
+ax.set_title("Feature importances using MDI")
+ax.set_ylabel("Impurity")
+fig.tight_layout()
+
+actual_values = y_test
+predicted_values = y_pred_final
+
+# creating a scatter plot of the actual vs predicted values
+plt.scatter(actual_values, predicted_values)
+
+# adding a diagonal line to show where the fitted values would be equal to the actual values
+plt.plot(actual_values, actual_values, color='red')
+
+plt.xlabel('Actual Values')
+plt.ylabel('Predicted Values')
+plt.title('Fitted vs Actual Values')
+plt.show()
+
+car_data_model.head()
+
+data_file = {'Year': ['2017', '2014'], 'Length': [3990.0, 3995.0], 'Width':[1680.0, 1695.0], 'Height':[1505.0, 1555.0], 'Fuel Tank Capacity': [35.0, 42.0], 'owner_enc': [0, 1], 'engine_enc': [7, 9]}
+random_pred_file = pd.DataFrame(data_file) 
+
+data = {'Year': ['2019', '2020'], 'Length': [4000, 5000], 'Width':[1600, 2000], 'Height':[1600, 1800], 'Fuel Tank Capacity': [40, 50], 'owner_enc': [0, 1], 'engine_enc': [10, 25]}
+random_pred_unseen = pd.DataFrame(data) 
+
+predictions_seen = final_model.predict(random_pred_file)
+predictions_unseen = final_model.predict(random_pred_unseen)
+
+price_og = [8416.6667, 7500.0000]
+
+print('\n')
+
+for i in range(len(random_pred_file)):
+  print('For car type ' + str(i+1) + ' in dataset')
+  print(random_pred_file.iloc[i])
+  print('Price in dataset: ', price_og[i])
+  print('Price predicted: ', round(predictions_seen[i], 4))
+  print('Difference: ', round(price_og[i] - predictions_seen[i], 4))
+  print('\n')
+
+
+
